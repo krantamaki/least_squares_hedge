@@ -3,7 +3,10 @@
 TODO
 """
 from typing import Callable, List, Literal, Tuple, Optional
+from scipy.sparse import csr_matrix
+from scipy.sparse.linalg import lsqr
 import numpy as np
+from numpy.linalg import lstsq
 import pandas as pd
 
 from quantform.pylib.equity.derivative import Option
@@ -47,7 +50,35 @@ class PathIndependentLeastSquaresHedge:
     """
     Solves for the optimal hedge
     """
-    pass 
+    
+    strikes = np.linspace(value_range[0], value_range[1], n_points)
+    
+    rows = []
+    cols = []
+    vals = []
+    
+    for col, option in enumerate(self.__options):
+      for row, strike in enumerate(strikes):
+        val = option(strike, self.__maturity_date)
+        
+        if val != 0:
+          rows.append(row)
+          cols.append(col)
+          vals.append(val)
+          
+    system_matrix = csr_matrix((vals, (rows, cols)), shape=(n_points, len(self.__options)))
+    rhs_vector = np.array([self.__payoff(strike) for strike in strikes])
+    
+    if self.__solver == 'scipy':
+      solution = lsqr(system_matrix, rhs_vector).x
+      
+    elif self.__solver == 'numpy':
+      solution = lstsq(system_matrix.todense(), rhs_vector).x
+    
+    else:
+      raise NotImplementedError("QuantForm linear least squares not yet implemented!")
+    
+    self.__strategy = GenericUnivariateStrategy(self.__options, solution)
 
 
   @property
