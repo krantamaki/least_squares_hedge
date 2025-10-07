@@ -1,6 +1,13 @@
+# Ignore the possible strategies that have been implemented
+src/tasks/*.py
+
 # Ignore all executable files
 *.o
 *.exe
+
+# Ignore shared object files
+*.so
+*.dll
 
 # Ignore pycache
 *__pycache__
@@ -10,3 +17,9 @@
 
 # Ignore the virtual environment
 .venv
+
+# Ignore the .egg-info folder for the built library
+*.egg-info
+
+# Ignore the build
+build
